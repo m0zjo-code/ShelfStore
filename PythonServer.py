@@ -1,4 +1,5 @@
 # Jonathan Rawlinson - M0ZJO - 2016
+# https://github.com/m0zjo-code/ShelfStore
 
 import socket
 import sys
@@ -6,24 +7,12 @@ import thread
 import MySQLdb
 import datetime
 import threading
+import time
 HOST = ''
 PORT = 8950
+hKeep_interval = 10
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-
-print "Socket Created"
-
-try:
-	s.bind((HOST, PORT))
-except socket.error as msg:
-	print "Bind Failed - Error: " + str(msg[0]) + " Message: " + msg[1]
-	sys.exit()
-
-print "Socket Bind Complete"
-
-s.listen(10)
-print "Socket now Listening"
 
 
 def process_data(data):
@@ -31,7 +20,7 @@ def process_data(data):
 	cursor = db.cursor()
 	data = data.split(":")
 	if data[0] == "01":
-		print data
+		#print data
 		now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		sqlq = "SELECT * FROM Shelf_Data WHERE Shelf_ID = '%s'" % data[1]
 		sqlI = "INSERT INTO Shelf_Data (Shelf_ID, Temp, Humidity, Mass, Timestamp) VALUES ('%s', '%s', '%s', '%s' ,'%s')" % (data[1], data[2], data[3], data[4], now)
@@ -43,22 +32,22 @@ def process_data(data):
 		#print results
 		try:
 			if results != None:
-				print 'Record Updated'
+				#print 'Record Updated'
 				cursor.execute(sqlU)
 
 			else:
-				print 'Record Inserted'
+				#print 'Record Inserted'
 				cursor.execute(sqlI)
 				
 			cursor.execute(sqlIH)
 			db.commit()
 		except:
-			print "Rollback"
+			print "Rollback", data
 			db.rollback()
 
 
 	elif data[0] == "02":
-		print data
+		#print data
 		now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 		sqlq = "SELECT * FROM Tag_Info WHERE Tag_ID = '%s'" % data[1]
@@ -69,21 +58,21 @@ def process_data(data):
 		cursor.execute(sqlq)
 		results = cursor.fetchone()
 		#print "DATA", data[1]
-		print results
+		#print results
 		try:
 			if results != None:
-				print 'Record Updated'
+				#print 'Record Updated'
 				cursor.execute(sqlU)
 			
 			else:
-				print 'Record Inserted'
+				#print 'Record Inserted'
 				cursor.execute(sqlI)
 
 			cursor.execute(sqlIH)
 			db.commit()
 		except:
 			db.rollback()
-			print "Rollback"
+			print "Rollback", data
 	db.close()
 	
 
@@ -111,14 +100,48 @@ def clientthread(conn):
 
 def Housekeep():
 	print "Housekeep"
+	db = MySQLdb.connect("localhost","stockit","stockit","Shelf_Data")
+	cursor = db.cursor()
+	check_timeout(cursor)
+	db.close()
+	threading.Timer(10, Housekeep).start()
 	#Get UID List
 	#See if timed out
-	threading.Timer(5, Housekeep).start ()
 
+def check_timeout(cursor):
+	sqlq = "SELECT * FROM Tag_Info"
+	cursor.execute(sqlq)
+	results = cursor.fetchall()
+	for i in results:
+		print i
+		#if time.now() - i[3] 
+
+
+##Main##
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
+print "Socket Created"
+
+try:
+	s.bind((HOST, PORT))
+except socket.error as msg:
+	print "Bind Failed - Error: " + str(msg[0]) + " Message: " + msg[1]
+	sys.exit()
+
+print "Socket Bind Complete"
+
+s.listen(10)
+print "Socket now Listening"
+	
+Housekeep()
+previousTime = 0
 while True:
-	Housekeep()
+
 	conn, addr = s.accept()
 	print "Connected with " + addr[0] + ":" + str(addr[1])
 	thread.start_new_thread(clientthread ,(conn,))
+	
 
-s.close()
+
