@@ -78,14 +78,14 @@ void loop(void){
   unsigned long currentMillis = millis();
   if(currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;   
-    xmit_Data("01:00000002:21.432:87.13:123.33");
+    xmit_Data("05:43345:21.432:123.33");
     bool val = digitalRead(BUILTIN_LED);
     digitalWrite(BUILTIN_LED, !val);
   }
 
   if(currentMillis - previousMillis2 >= interval2) {
     previousMillis2 = currentMillis;   
-    xmit_Data("02:3844787:00000001:7");
+    xmit_Data("06:43345:5:765237");
     bool val = digitalRead(BUILTIN_LED);
     digitalWrite(BUILTIN_LED, !val);
   }

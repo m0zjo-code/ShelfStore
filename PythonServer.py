@@ -21,7 +21,7 @@ def process_data(data):
 	data = data.split(":")
 	
 	if data[0] == "05":
-		#print data
+		print data
 		now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		sqlq = "SELECT * FROM Shelf_Live WHERE Shelf_ID = '%s'" % int(data[1])
 		sqlI = "INSERT INTO Shelf_Live (Shelf_ID, Temp, MassReading, Timestamp) VALUES ('%s', '%s', '%s' ,'%s')" % (int(data[1]), data[2], data[3], now)
