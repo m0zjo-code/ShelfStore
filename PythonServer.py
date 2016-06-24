@@ -32,11 +32,10 @@ def process_data(data):
 		#print results
 		try:
 			if results != None:
-				#print 'Record Updated'
+				print 'Record Updated'
 				cursor.execute(sqlU)
-
 			else:
-				#print 'Record Inserted'
+				print 'Record Inserted'
 				cursor.execute(sqlI)
 				
 			cursor.execute(sqlIH)
@@ -100,21 +99,33 @@ def clientthread(conn):
 
 def Housekeep():
 	print "Housekeep"
-	db = MySQLdb.connect("localhost","stockit","stockit","Shelf_Data")
+	db = MySQLdb.connect("localhost","housekeep","housekeep","Shelf_Data")
 	cursor = db.cursor()
-	check_timeout(cursor)
+	check_timeout(db, cursor)
 	db.close()
 	threading.Timer(10, Housekeep).start()
 	#Get UID List
 	#See if timed out
 
-def check_timeout(cursor):
+def check_timeout(db, cursor):
 	sqlq = "SELECT * FROM Tag_Info"
+	
 	cursor.execute(sqlq)
 	results = cursor.fetchall()
+	now = datetime.datetime.now()
+	interval = datetime.timedelta(seconds = 60)
 	for i in results:
-		print i
-		#if time.now() - i[3] 
+		print now - i[3], now - i[3]>interval
+		if now - i[3]>interval:
+			sqlU = "UPDATE Tag_Info SET Location='%s', Timestamp='%s' WHERE Tag_ID='%s'" % (0, now, int(i[0]))
+			print sqlU
+			try:
+				cursor.execute(sqlU)
+				print "Housekeep Update"
+				db.commit()
+			except:
+				print "HKeep Rollback"
+				db.rollback()
 
 
 ##Main##
@@ -135,7 +146,7 @@ print "Socket Bind Complete"
 s.listen(10)
 print "Socket now Listening"
 	
-Housekeep()
+#Housekeep()
 previousTime = 0
 while True:
 
