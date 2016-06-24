@@ -16,62 +16,58 @@ hKeep_interval = 10
 
 
 def process_data(data):
-	db = MySQLdb.connect("localhost","stockit","stockit","Shelf_Data")
+	db = MySQLdb.connect("localhost","stockit","stockit","StockItV2")
 	cursor = db.cursor()
 	data = data.split(":")
-	if data[0] == "01":
+	
+	if data[0] == "05":
 		#print data
 		now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-		sqlq = "SELECT * FROM Shelf_Data WHERE Shelf_ID = '%s'" % data[1]
-		sqlI = "INSERT INTO Shelf_Data (Shelf_ID, Temp, Humidity, Mass, Timestamp) VALUES ('%s', '%s', '%s', '%s' ,'%s')" % (data[1], data[2], data[3], data[4], now)
-		sqlU = "UPDATE Shelf_Data SET Temp='%s', Humidity='%s', Mass='%s', Timestamp='%s' WHERE Shelf_ID='%s'" % (data[2], data[3], data[4], now, int(data[1]))
-		sqlIH = "INSERT INTO Shelf_Data_Hist (Shelf_ID, Temp, Humidity, Mass, Timestamp) VALUES ('%s', '%s', '%s', '%s' ,'%s')" % (data[1], data[2], data[3], data[4], now)
+		sqlq = "SELECT * FROM Shelf_Live WHERE Shelf_ID = '%s'" % int(data[1])
+		sqlI = "INSERT INTO Shelf_Live (Shelf_ID, Temp, MassReading, Timestamp) VALUES ('%s', '%s', '%s' ,'%s')" % (int(data[1]), data[2], data[3], now)
+		sqlU = "UPDATE Shelf_Live SET Temp='%s', MassReading='%s', Timestamp='%s' WHERE Shelf_ID='%s'" % (data[2], data[3], now, int(data[1]))
 		cursor.execute(sqlq)
 		results = cursor.fetchone()
-		#print "DATA", data[1]
-		#print results
-		try:
-			if results != None:
-				print 'Record Updated'
-				cursor.execute(sqlU)
-			else:
-				print 'Record Inserted'
-				cursor.execute(sqlI)
-				
-			cursor.execute(sqlIH)
-			db.commit()
-		except:
-			print "Rollback", data
-			db.rollback()
-
-
-	elif data[0] == "02":
-		#print data
-		now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-		sqlq = "SELECT * FROM Tag_Info WHERE Tag_ID = '%s'" % data[1]
-
-		sqlI = "INSERT INTO Tag_Info (Tag_ID, Shelf_ID, Location, Timestamp) VALUES ('%s', '%s', '%s', '%s')" % (data[1], data[2], data[3], now)
-		sqlU = "UPDATE Tag_Info SET Shelf_ID='%s', Location='%s', Timestamp='%s' WHERE Tag_ID='%s'" % (data[2], data[3], now, int(data[1]))
-		sqlIH = "INSERT INTO Tag_Info_Hist (Tag_ID, Shelf_ID, Location, Timestamp) VALUES ('%s', '%s', '%s', '%s')" % (data[1], data[2], data[3], now)
-		cursor.execute(sqlq)
-		results = cursor.fetchone()
-		#print "DATA", data[1]
-		#print results
+		#print "DATA", data
+		
 		try:
 			if results != None:
 				#print 'Record Updated'
 				cursor.execute(sqlU)
-			
 			else:
 				#print 'Record Inserted'
 				cursor.execute(sqlI)
-
-			cursor.execute(sqlIH)
+			#cursor.execute(sqlIH)
 			db.commit()
-		except:
-			db.rollback()
+
+		except Exception, e:
+			print str(e)
 			print "Rollback", data
+			db.rollback()
+		cursor.execute(sqlq)
+		results = cursor.fetchone()
+		db.commit()
+
+		sqlIH = "INSERT INTO Shelf_History (Shelf_ID, Temp, MassReading, NFC0, NFC1, NFC2, NFC3, NFC4, NFC5, NFC6, NFC7, Timestamp) VALUES ('%s', '%s', '%s' ,'%s', '%s', '%s', '%s' ,'%s','%s', '%s', '%s', '%s')" % (int(results[0]), results[1], results[2], results[3], results[4], results[5], results[6], results[7], results[8], results[9], results[10], results[11])
+		cursor.execute(sqlIH)
+		db.commit()
+
+	if data[0] == "06":
+
+		now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+		sqlU = "UPDATE Shelf_Live SET NFC%s='%s', Timestamp='%s' WHERE Shelf_ID='%s'" % (data[2], data[3], now, data[1])
+
+		try:
+			cursor.execute(sqlU)
+				
+			#cursor.execute(sqlIH)
+			db.commit()
+		except Exception, e:
+			print str(e)
+			print "Rollback", data
+			db.rollback()	
+
+
 	db.close()
 	
 
