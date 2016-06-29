@@ -53,21 +53,16 @@ def main():
 
 		screen.clear()
 		screen.border(0)
-		screen.addstr(2, 2, 'Please enter a number...')
-		screen.addstr(4, 4, 'Live Shelf Info')
-		screen.addstr(5, 4, 'Live Tag Info')
+		screen.addstr(4, 4, 'Press 1 - Live Shelf Info')
+		screen.addstr(5, 4, 'Press 2 - Live Tag Info')
 		#screen.addstr(6, 4, '3 - Show disk space                (df -h)')
-		screen.addstr(7, 4, 'q - Exit')
+		screen.addstr(7, 4, 'Press q - Exit')
 		screen.refresh()
  	
 		opt = screen.getch()  # Wait for user to enter a character.
 		#opt = '6'
 		if opt == ord('1'):
-			names = get_param('Enter your name, or comma-seperated names')
-			age = get_param('Enter your age')
-			curses.endwin()
-			print '\n\nHappy birthday ' + names + '. You are ' + age + '!\n\n'
-			raw_input('Press enter (to return to main)')
+			shelf_screen()
 		if opt == ord('2'):
 			tag_screen()
 		if opt == ord('3'):
@@ -75,6 +70,47 @@ def main():
 			execute_cmd('df -h')
  
 		curses.endwin()
+
+def shelf_screen():
+	opt = 0
+	k = 4
+	now = ""
+	curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+	curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)
+	curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
+	curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+	try:
+		while True:
+			db = MySQLdb.connect("localhost","stockit","stockit","StockItV2")
+			# prepare a cursor object using cursor() method
+			cursor = db.cursor()
+			sqlq = "SELECT * FROM Shelf_Live"
+			cursor.execute(sqlq)
+			results = cursor.fetchall()
+			screen.clear()	
+			now_old = now
+			now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+			j = 5
+			
+			screen.border(curses.ACS_VLINE, curses.ACS_VLINE,curses.ACS_DIAMOND, curses.ACS_DIAMOND)
+			
+			screen.addstr(j-1, 2, "Shelf ID II Temp   II Mass   II NFC0   II NFC1   II NFC2   II NFC3   II NFC4   II NFC5   II NFC6   II NFC7   II Timestamp (Last Updated)", curses.color_pair(k))
+			#for i in range(0, 20):
+			#	screen.addch(3,i,curses.ACS_HLINE)
+ 			for i in results:
+				j = j + 1
+				pad = 6
+				data = str(i[0]).ljust(6) + " II " + str(i[1]).ljust(6) + " II "  + str(i[2]).ljust(6) + " II "  + str(i[3]).ljust(pad) + " II "    + str(i[4]).ljust(pad) + " II "    + str(i[5]).ljust(pad) + " II "    + str(i[6]).ljust(pad) + " II "    + str(i[7]).ljust(pad) + " II "    + str(i[8]).ljust(pad) + " II "    + str(i[9]).ljust(pad) + " II "    + str(i[10]).ljust(pad) + " II "  + i[11].strftime('%Y-%m-%d %H:%M:%S')
+				screen.addstr(j, 4, data)
+			
+			screen.addstr(j+2, 8, "Current Time: " + now)
+			screen.addstr(j+4, 8, "Ctrl-C for Exit!")
+			db.close()
+			if now != now_old: screen.refresh()
+			time.sleep(0.1)
+			#opt = screen.getch()
+	except KeyboardInterrupt:
+		return
 
 def tag_screen():
 	opt = 0
@@ -98,7 +134,7 @@ def tag_screen():
 			
 			screen.border(curses.ACS_VLINE, curses.ACS_VLINE,curses.ACS_DIAMOND, curses.ACS_DIAMOND)
 			
-			screen.addstr(j-1, 8, "Tag ID   II Temperature II Mass Reading II Location II Timestamp (Last Updated)", curses.color_pair(k))
+			screen.addstr(j-1, 8, "Tag ID   II Temperature II Mass Reading II Shelf    II Locator  II Timestamp (Last Updated)", curses.color_pair(k))
 			#for i in range(0, 20):
 			#	screen.addch(3,i,curses.ACS_HLINE)
  			for i in results:
@@ -107,16 +143,36 @@ def tag_screen():
 					location = "Removed"
 				elif int(i[3]) >= 0:
 					location = int(i[3])
-				data = str(i[0]).ljust(8) + " II " + str(i[1]).ljust(11) + " II "  + str(i[2]).ljust(12) + " II "  + str(location).ljust(8) + " II "  + i[4].strftime('%Y-%m-%d %H:%M:%S')
+				data = str(i[0]).ljust(8) + " II " + str(i[1]).ljust(11) + " II "  + str(i[2]).ljust(12) + " II "  + str(find_tag(i[0])).ljust(8) + " II "  +  str(location).ljust(8) + " II "  + i[4].strftime('%Y-%m-%d %H:%M:%S')
 				screen.addstr(j, 8, data)
 			
 			screen.addstr(j+1, 8, "Current Time: " + now)
 			screen.addstr(j+3, 8, "Ctrl-C for Exit!")
 			db.close()
 			if now != now_old: screen.refresh()
+			time.sleep(0.1)
 			#opt = screen.getch()
 	except KeyboardInterrupt:
 		return
- 
+
+def find_tag(UID):
+	db = MySQLdb.connect("localhost","stockit","stockit","StockItV2")
+	# prepare a cursor object using cursor() method
+	cursor = db.cursor()
+ 	sqlq = "SELECT * FROM Shelf_Live"
+	cursor.execute(sqlq)
+	results = cursor.fetchall()
+	db.close()
+	#print results
+	for i in results:
+		for j in range(0, 7):
+			try:
+				if int(i[j+3]) == int(UID):
+					return i[0]
+			except TypeError:
+				continue
+	return -1
+		
+	
 if __name__ == '__main__':
     main()
