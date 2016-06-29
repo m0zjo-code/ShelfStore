@@ -12,7 +12,7 @@ const char* host = "esp8266-webupdate";
 const char* ssid = "Stock-It-Server";
 const char* password = "stockit123";
 
-const char* dest = "192.168.0.50";
+const char* dest = "192.168.0.100";
 const int port = 8950;
 
 #define BUILTIN_LED 2
@@ -78,16 +78,17 @@ void loop(void){
   unsigned long currentMillis = millis();
   if(currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;   
-    xmit_Data("05:43345:21.432:123.33");
+    xmit_Data("05:43345:21.432:123.33"); //PktIdent:ShelfID:Temp:MassReading
     bool val = digitalRead(BUILTIN_LED);
     digitalWrite(BUILTIN_LED, !val);
   }
 
   if(currentMillis - previousMillis2 >= interval2) {
     previousMillis2 = currentMillis;   
-    xmit_Data("06:43345:5:765237");
+    xmit_Data("06:43345:5:765237"); //PktIdent:ShelfID:Location:TadID
     bool val = digitalRead(BUILTIN_LED);
     digitalWrite(BUILTIN_LED, !val);
+    Serial.println("Sent NFC Pkt");
   }
   
   
