@@ -33,6 +33,30 @@ String  construct_regular_packet(){
   return packet;
 }
 
+void wifi_init(){
+  Serial.println();
+  Serial.println("Booting Sketch...");
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.begin(ssid, password);
+
+  while(WiFi.waitForConnectResult() != WL_CONNECTED){
+    WiFi.begin(ssid, password);
+    Serial.println("WiFi failed, retrying.");
+  }
+
+  MDNS.begin(host);
+
+  httpUpdater.setup(&httpServer);
+  httpServer.begin();
+
+  MDNS.addService("http", "tcp", 80);
+  Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
+  Serial.print("My IP is: ");
+  Serial.println(WiFi.localIP());
+
+  return 1;
+}
+
 void transmit(){
 	
 	String packet = construct_housekeeping_packet();

@@ -1,7 +1,7 @@
 Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 
 const int NO_CAL_READ = 256; 
-const int MASS_CHANGE_THRESHOLD = 20;
+const int MASS_CHANGE_THRESHOLD = 80;
 
 int16_t start_mass = 0;
 int16_t previous_mass = 0;
@@ -48,7 +48,9 @@ int16_t get_mass(void)
 boolean mass_changed(void){
 	int16_t mass = ads.readADC_SingleEnded(0); //argument is channel for reading
 	if(mass - previous_mass > MASS_CHANGE_THRESHOLD || previous_mass - mass > MASS_CHANGE_THRESHOLD){
+    previous_mass = mass;
 		return 1;
 	}
+ previous_mass = mass;
 	return 0;
 }

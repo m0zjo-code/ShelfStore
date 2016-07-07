@@ -8,7 +8,7 @@
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
   uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
   
-  const int NO_NFC_READERS = 4;
+  const int NO_NFC_READERS = 8;
 
 void nfc_select(uint8_t i) {
   if (i > 7) return;
@@ -28,9 +28,9 @@ int nfc_init(int channel) {
   uint32_t versiondata = nfc.getFirmwareVersion();
   //Uncomment below once all readers are implemented
   //It will return an error if it fails
-  //if (! versiondata) {
-  //  return 0;
-  //}
+  if (! versiondata) {
+    return 0;
+  }
 
   // Set the max number of retry attempts to read from a card
   // This prevents us from waiting forever for a card, which is
